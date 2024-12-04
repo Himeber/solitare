@@ -9,6 +9,7 @@ class Game:
         self.deck = []
         self.deckrect = self.cardback.get_rect(center = (37.5,35))
         self.discard = []
+        self.stacks = [Stack(37.5,287.5),Stack(172.5,287.5),Stack(302.5,287.5),Stack(435.5,287.5),Stack(571,287.5),Stack(702,287.5),Stack(830,287)]
         for i in range(8):
             i+=2
             cardname = "card_clubs_0"
@@ -46,9 +47,16 @@ class Game:
     def updatecards(self,screen):
         for card in self.cardslist:
             card.update()
-            screen.blit(card.img,(card.x,card.y))
+            if card.visible:
+                screen.blit(card.img,(card.x,card.y))
+            else:
+                screen.blit(card.back,(card.x,card.y))
             #pygame.draw.rect(screen, "black", pygame.Rect(card.rect))
         #pygame.draw.rect(screen, "black", pygame.Rect(self.deckrect))
+        for stack in self.stacks:
+            stack.update()
+            screen.blit(stack.img,(stack.x,stack.y))
+            #pygame.draw.rect(screen, "black", pygame.Rect(stack.rect))
     
     def deckshuffle(self):
         for i in range(len(self.discard)):
@@ -64,24 +72,46 @@ class Game:
         card.y = 35
 
     def checkvalid(self,card):
-        validpositions = [(90,380),(220,380),(360,380),(480,380),(620,380),(760,380),(880,380)]
+        for stack in self.stacks:
+            pass
+
+
+class Stack:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.img = pygame.image.load("imgs\\card-back.png").convert_alpha()
+        self.img = pygame.transform.scale(self.img,(100,200))
+        self.rect = self.img.get_rect(center = (self.x+50,self.y+100))
+        self.cards = []
+        self.nextValue = 13
+        self.nextColor = "any"
+    
+    def update(self):
+        self.rect = self.img.get_rect(center = (self.x+50,self.y+100))
+
 
 class Card:
     def __init__(self,img,value,suit):
         self.img = pygame.image.load(img).convert_alpha()
         self.img = pygame.transform.scale(self.img,(150,200))
+        self.back = pygame.image.load("imgs\\card-back.png").convert_alpha()
+        self.back = pygame.transform.scale(self.img,(150,200))
         self.value = value
         self.x = 0
         self.y = 0
         self.suit = suit
+        self.visible = True
         self.indeck = True
         self.rect = self.img.get_rect(center = (self.x+150,self.y-200))
+        self.instack = None
     
     def update(self):
         if self.indeck:
             self.x = 999
             self.y = 999
         self.rect = self.img.get_rect(center = (self.x+75,self.y+100))
+
 
     def __repr__(self) -> str:
         return (f"Card: {self.value} of {self.suit}")
