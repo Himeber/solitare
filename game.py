@@ -30,8 +30,30 @@ class Game:
         self.cardslist.append(Card(f"imgs\\cards\\card_hearts_J.png",11,"hearts"))
         self.cardslist.append(Card(f"imgs\\cards\\card_hearts_Q.png",12,"hearts"))
         self.cardslist.append(Card(f"imgs\\cards\\card_hearts_K.png",13,"hearts"))
+        for i in range(8):
+            i+=2
+            cardname = "card_spades_0"
+            cardname += str(i)
+            self.cardslist.append(Card(f"imgs\\cards\\{cardname}.png",i,"spades"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_spades_10.png",10,"spades"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_spades_A.png",1,"spades"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_spades_J.png",11,"spades"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_spades_Q.png",12,"spades"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_spades_K.png",13,"spades"))
+        for i in range(8):
+            i+=2
+            cardname = "card_diamonds_0"
+            cardname += str(i)
+            self.cardslist.append(Card(f"imgs\\cards\\{cardname}.png",i,"diamonds"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_diamonds_10.png",10,"diamonds"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_diamonds_A.png",1,"diamonds"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_diamonds_J.png",11,"diamonds"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_diamonds_Q.png",12,"diamonds"))
+        self.cardslist.append(Card(f"imgs\\cards\\card_diamonds_K.png",13,"diamonds"))
         for card in self.cardslist:
             self.deck.append(card)
+            card.visible = False
+        self.deckshuffle()
     def resize_images(self):
         self.background = pygame.transform.scale(self.background,(1024,720))
         self.cardback = pygame.transform.scale(self.cardback,(100,200))
@@ -45,6 +67,9 @@ class Game:
             screen.blit(self.cardback,(37.5,35))
 
     def updatecards(self,screen):
+        for stack in self.stacks:
+            stack.update()
+            #pygame.draw.rect(screen, "black", pygame.Rect(stack.rect))    
         for card in self.cardslist:
             card.update()
             if card.visible:
@@ -53,14 +78,16 @@ class Game:
                 screen.blit(card.back,(card.x,card.y))
             #pygame.draw.rect(screen, "black", pygame.Rect(card.rect))
         #pygame.draw.rect(screen, "black", pygame.Rect(self.deckrect))
-        for stack in self.stacks:
-            stack.update()
-            screen.blit(stack.img,(stack.x,stack.y))
-            #pygame.draw.rect(screen, "black", pygame.Rect(stack.rect))
-    
+        if self.discard != []:
+            for i in self.discard:
+                i.visible = False
+                i.moveable = False
+            self.discard[-1].moveable = True
+            self.discard[-1].visible = True
+
     def deckshuffle(self):
         for i in range(len(self.discard)):
-            self.deck.append(self.discard.pop)
+            self.deck.append(self.discard.pop())
         random.shuffle(self.deck)
 
     def drawcard(self):
@@ -70,20 +97,61 @@ class Game:
         card.indeck = False
         card.x = 147.5
         card.y = 35
+        self.discard.append(card)
 
     def checkvalid(self,card):
+        valid = False
         for stack in self.stacks:
-            if card.rect.collidepoint(stack.rect):
+          if not isinstance(stack,EndStack):
+            if card.rect.collidepoint(stack.x+50,stack.y+100):
+                print("collided with stack")
                 if card.value == stack.nextValue:
-                    if card.suit == "spade" or card.suit == "club":
-                        pass
+                    print('correct value')
+                    if card.suit == "spades" or card.suit == "clubs":
+                        if stack.nextColor == "black" or stack.nextValue == 13:
+                            print("correct color")
+                            card.x = stack.x
+                            card.y = stack.y
+                            if card.instack:
+                                card.instack.cards.pop()
+                            else:
+                                self.discard.pop()
+                            card.instack = stack
+                            valid = True
+                    elif card.suit == "hearts" or card.suit == "diamonds":
+                        if stack.nextColor == "red" or stack.nextValue == 13:
+                            print("correct color")
+                            stack.cards.append(card)
+                            if card.instack:
+                                card.instack.cards.pop()
+                            else:
+                                self.discard.pop()
+                            card.instack = stack
+                            valid = True
+          else:
+              if card.rect.collidepoint(stack.x+50,stack.y+100):
+                print("collided with endstack")
+                if card.value == stack.nextValue and card.suit == stack.nextColor:
+                    if card.instack:
+                        card.instack.cards.pop()
+                    else:
+                        self.discard.pop()
+                    stack.cards.append(card)
+                    card.x = stack.x
+                    card.y = stack.y
+                    card.instack = stack
+                    valid = True
+        if not valid:
+            card.x = 147.5
+            card.y = 35
+            print("invalid")
 
 
 class Stack:
     def __init__(self,x,y):
         self.x = x
         self.y = y
-        self.img = pygame.image.load("imgs\\card-back.png").convert_alpha()
+        self.img = pygame.image.load("imgs\\stack-back.png").convert_alpha()
         self.img = pygame.transform.scale(self.img,(100,200))
         self.rect = self.img.get_rect(center = (self.x+50,self.y+100))
         self.cards = []
@@ -91,8 +159,39 @@ class Stack:
         self.nextColor = "any"
     
     def update(self):
-        self.rect = self.img.get_rect(center = (self.x+50,self.y+100))
+        x = self.x - 25
+        y = self.y
+        for card in self.cards:
+            if not card.moving:
+                card.x = x
+                card.y = y
+                y += 50
+        if self.cards != []:
+            self.cards[-1].moveable = True
+        self.rect = self.img.get_rect(center = (x,y))
+        if self.cards != []:
+            if self.cards[-1].suit == "hearts" or self.cards[-1].suit == "diamonds":
+                self.nextColor == "black"
+            else:
+                self.nextColor == "red"
+            self.nextValue = self.cards[-1].value -1           
 
+class EndStack(Stack):
+    def __init__(self, x, y,type):
+        super().__init__(x, y)
+        self.nextColor = type
+        self.nextValue = 1
+    
+    def update(self):
+        self.rect = self.img.get_rect(center = (self.x,self.y))
+        for card in self.cards:
+            card.visible = False
+        if self.cards != []:
+            self.nextValue = self.cards[-1].value +1
+            self.nextColor = self.cards[-1].suit
+            self.cards[-1].visible = True
+            
+            
 
 class Card:
     def __init__(self,img,value,suit):
@@ -108,6 +207,8 @@ class Card:
         self.indeck = True
         self.rect = self.img.get_rect(center = (self.x+150,self.y-200))
         self.instack = None
+        self.moving = False
+        self.moveable = False
     
     def update(self):
         if self.indeck:

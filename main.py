@@ -17,12 +17,12 @@ while True:
             sys.exit()
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            print(f"mousedown at {event.pos}")
             if event.button == 1:      
                 for card in game.cardslist:
-                    if card.rect.collidepoint(event.pos):
+                    if card.rect.collidepoint(event.pos) and card.moveable:
                         carddragging = True
                         cardbeinggrabbed = card
+                        card.moving = True
                         mouse_x, mouse_y = event.pos
                         offset_x = card.x - mouse_x
                         offset_y = card.y - mouse_y
@@ -34,8 +34,9 @@ while True:
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:            
                 carddragging = False
-                print("let go")
-                game.checkvalid(cardbeinggrabbed)
+                if cardbeinggrabbed:
+                    game.checkvalid(cardbeinggrabbed)
+                    card.moving = False
                 cardbeinggrabbed = None
 
         elif event.type == pygame.MOUSEMOTION:
