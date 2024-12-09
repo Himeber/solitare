@@ -73,7 +73,10 @@ class Game:
 
     def checkvalid(self,card):
         for stack in self.stacks:
-            pass
+            if card.rect.collidepoint(stack.rect):
+                if card.value == stack.nextValue:
+                    if card.suit == "spade" or card.suit == "club":
+                        pass
 
 
 class Stack:
