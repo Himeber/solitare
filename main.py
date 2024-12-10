@@ -3,13 +3,15 @@ import sys
 from game import Game
 
 pygame.init()
-screen = pygame.display.set_mode((1024,720))
+screen = pygame.display.set_mode((1024,1024))
 clock = pygame.time.Clock()
 game = Game("imgs\\solitare_board.png","imgs\\card-back.png")
 game.resize_images()
 carddragging = False
 cardbeinggrabbed = None
 deck = game.deckrect
+lastpos = 0,0
+game.dealer()
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -27,6 +29,8 @@ while True:
                         offset_x = card.x - mouse_x
                         offset_y = card.y - mouse_y
                         print(f"Grabbed {card}")
+                        lastpos = card.x,card.y
+                        print(game.discard)
                 if cardbeinggrabbed == None:
                     if deck.collidepoint(event.pos):
                         game.drawcard()
@@ -35,7 +39,9 @@ while True:
             if event.button == 1:            
                 carddragging = False
                 if cardbeinggrabbed:
-                    game.checkvalid(cardbeinggrabbed)
+                    valid = game.checkvalid(cardbeinggrabbed)
+                    if not valid:
+                        card.x,card.y = lastpos
                     card.moving = False
                 cardbeinggrabbed = None
 
@@ -45,7 +51,7 @@ while True:
                 mouse_x, mouse_y = event.pos
                 card.x = mouse_x + offset_x
                 card.y = mouse_y + offset_y
-    
+    screen.fill((255,255,255))
     game.show_background(screen)
     game.showdeck(screen)
     game.updatecards(screen)
