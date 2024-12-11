@@ -24,13 +24,11 @@ while True:
                     if card.rect.collidepoint(event.pos) and card.moveable:
                         carddragging = True
                         cardbeinggrabbed = card
-                        card.moving = True
                         mouse_x, mouse_y = event.pos
                         offset_x = card.x - mouse_x
                         offset_y = card.y - mouse_y
                         print(f"Grabbed {card}")
                         lastpos = card.x,card.y
-                        print(game.discard)
                 if cardbeinggrabbed == None:
                     if deck.collidepoint(event.pos):
                         game.drawcard()
@@ -43,11 +41,14 @@ while True:
                     if not valid:
                         card.x,card.y = lastpos
                     card.moving = False
+                    for card2 in card.cardsontop:
+                        card2.movving = False
                 cardbeinggrabbed = None
 
         elif event.type == pygame.MOUSEMOTION:
             if carddragging and cardbeinggrabbed:
                 card = cardbeinggrabbed
+                card.moving = True
                 mouse_x, mouse_y = event.pos
                 card.x = mouse_x + offset_x
                 card.y = mouse_y + offset_y

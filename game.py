@@ -68,14 +68,12 @@ class Game:
             screen.blit(self.cardback,(37.5,35))
 
     def updatecards(self,screen):
-        for card in self.cardslist:
-            card.visible = False
-            card.moveable = False
-            
         for stack in self.stacks:
             stack.update(screen)
             #pygame.draw.rect(screen, "black", pygame.Rect(stack.rect))    
         for card in self.cardslist:
+            if card.moving:
+                print(f"{card} is moving")
             card.update()
             if card.instack == None and card not in self.discard:
                 if card.visible:
@@ -120,10 +118,12 @@ class Game:
             self.deckshuffle()
         card = self.deck.pop()
         card.indeck = False
+        card.visible = False
         card.x = 147.5
         card.y = 35
         if stack:
             stack.cards.append(card)
+            card.instack = stack
         else:
             self.discard.append(card)
 
@@ -135,17 +135,20 @@ class Game:
                 print("collided with stack")
                 if card.value == stack.nextValue:
                     print('correct value')
-                    print(f"color is {card.suit}")
+                    print(f"color is {card.suit}, stack wants {stack.nextColor}")
                     if card.suit == "spades" or card.suit == "clubs":
                         if stack.nextColor == "black" or stack.nextValue == 13:
                             print("correct color")
                             stack.nextColor = "red"
-                            stack.cards.append(card)
                             if card.instack:
                                 card.instack.cards.pop()
+                                for card2 in card.cardsontop:
+                                    card2.instack.cards.pop()
+                                    card2.instack = stack
                             else:
                                 self.discard.pop()
                             card.instack = stack
+                            stack.cards.append(card)
                             valid = True
                     if card.suit == "hearts" or card.suit == "diamonds":
                         if stack.nextColor == "red" or stack.nextValue == 13:
@@ -154,6 +157,10 @@ class Game:
                             stack.cards.append(card)
                             if card.instack:
                                 card.instack.cards.pop()
+                                for card2 in card.cardsontop:
+                                    card2.instack.cards.pop()
+                                    card2.instack = stack
+                                    stack.cards.append(card2)
                             else:
                                 self.discard.pop()
                             card.instack = stack
@@ -161,7 +168,7 @@ class Game:
           else:
             if card.rect.collidepoint(stack.x,stack.y):
                 print("collided with endstack")
-                if card.value == stack.nextValue and card.suit == stack.nextColor:
+                if card.value == stack.nextValue and card.suit == stack.nextColor and card.cardsontop == []:
                     if card.instack:
                         card.instack.cards.pop()
                     else:
@@ -171,6 +178,18 @@ class Game:
                     card.y = stack.y
                     card.instack = stack
                     valid = True
+                else:
+                    if card.value != stack.nextValue:
+                        print(f"Wrong value, stack wants {stack.nextValue}")
+                    if card.suit != stack.nextColor:
+                        print(f"Wrong suit, stack wants {stack.nextColor}")
+                    if card.cardsontop != []:
+                        print(f"Card has cards on top of it")
+        if valid:
+            for card in self.cardslist:
+                card.cardsontop = []
+        for card in self.cardslist:
+            card.moving = False
         return valid
 
     def dealer(self):
@@ -180,6 +199,8 @@ class Game:
         for i in self.cardslist:
             i.visible = False
             i.moveable = False
+        for stack in self.stacks:
+            stack.cards.sort()
 
 
 class Stack:
@@ -202,24 +223,30 @@ class Stack:
                 card.y = y
                 y += 50
                 toppagelist = []
-                for card2 in self.cards[cardnum+1:-1]:
+                for card2 in self.cards[cardnum+1:]:
                     toppagelist.append(card2)
-                    card.cardsontop = toppagelist
-            screen.blit(card.img,(card.x,card.y))     
+                card.cardsontop = toppagelist
+        x += 25    
         self.rect = self.img.get_rect(center = (x,y))
+        #screen.blit(self.img,(x,y))
         if self.cards != []:
             self.nextValue = self.cards[-1].value -1   
             self.cards[-1].visible = True
             if self.cards[-1].suit == "hearts" or self.cards[-1].suit == "diamonds":
-                self.nextColor = "red"
-            else:
                 self.nextColor = "black"
+            else:
+                self.nextColor = "red"
+        else:
+            self.nextValue = 13
+            self.nextColor = "any"
         for card in self.cards:
+            card.smallhitbox = True
             if card.visible:
                 screen.blit(card.img,(card.x,card.y))
                 card.moveable = True
             else:
-                screen.blit(card.back,(card.x,card.y))
+                screen.blit(card.back,(card.x+25,card.y))
+                card.moveable = False
 
 class EndStack(Stack):
     def __init__(self, x, y,type):
@@ -244,7 +271,7 @@ class Card:
         self.img = pygame.image.load(img).convert_alpha()
         self.img = pygame.transform.scale(self.img,(150,200))
         self.back = pygame.image.load("imgs\\card-back.png").convert_alpha()
-        self.back = pygame.transform.scale(self.img,(150,200))
+        self.back = pygame.transform.scale(self.back,(100,200))
         self.value = value
         self.x = 0
         self.y = 0
@@ -255,6 +282,13 @@ class Card:
         self.instack = None
         self.moving = False
         self.moveable = False
+        self.smallhitbox = False
+
+    def __lt__(self,other):
+        if self.value < other.value:
+            return True
+        else:
+            return False
     
     def update(self):
         if self.indeck:
@@ -264,16 +298,20 @@ class Card:
         if self.cardsontop != []:
             y = self.y
             for card in self.cardsontop:
+              if not card.moving:
                 y += 50
                 card.x = self.x
                 card.y = y
         if not self.visible:
             self.moveable = False
         if self.moving:
+            y = self.y
             for card in self.cardsontop:
+                y += 50
                 card.moving = True
-
-
+                card.x = self.x
+                card.y = y
+            print(f"{self} has {self.cardsontop} on top ")
 
     def __repr__(self) -> str:
         return (f"Card: {self.value} of {self.suit}")
