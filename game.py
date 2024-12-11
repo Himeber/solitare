@@ -194,6 +194,7 @@ class Game:
 
     def dealer(self):
         for num,stack in enumerate(self.stacks):
+            num += 1
             for i in range(num):
                 self.drawcard(stack)
         for i in self.cardslist:
