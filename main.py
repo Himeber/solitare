@@ -12,6 +12,7 @@ cardbeinggrabbed = None
 deck = game.deckrect
 lastpos = 0,0
 game.dealer()
+game.debug = True
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -19,7 +20,9 @@ while True:
             sys.exit()
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:      
+            if event.button == 1:
+                if game.debug:
+                    print(f"Click at {event.pos}")
                 for card in game.cardslist:
                     if card.rect.collidepoint(event.pos) and card.moveable:
                         carddragging = True
@@ -27,7 +30,8 @@ while True:
                         mouse_x, mouse_y = event.pos
                         offset_x = card.x - mouse_x
                         offset_y = card.y - mouse_y
-                        print(f"Grabbed {card}")
+                        if game.debug:
+                            print(f"Grabbed {card}")
                         lastpos = card.x,card.y
                 if cardbeinggrabbed == None:
                     if deck.collidepoint(event.pos):
@@ -42,7 +46,7 @@ while True:
                         card.x,card.y = lastpos
                     card.moving = False
                     for card2 in card.cardsontop:
-                        card2.movving = False
+                        card2.moving = False
                 cardbeinggrabbed = None
 
         elif event.type == pygame.MOUSEMOTION:
