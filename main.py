@@ -59,6 +59,6 @@ while True:
     screen.fill((255,255,255))
     game.show_background(screen)
     game.showdeck(screen)
-    game.updatecards(screen)
+    game.updatecards(screen,cardbeinggrabbed)
     pygame.display.update()
     clock.tick(120)

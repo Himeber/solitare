@@ -68,7 +68,7 @@ class Game:
         if self.deck != []:
             screen.blit(self.cardback,(37.5,35))
 
-    def updatecards(self,screen):
+    def updatecards(self,screen,movingcard=None):
         for stack in self.stacks:
             stack.update(screen)
             #pygame.draw.rect(screen, "black", pygame.Rect(stack.rect))
@@ -107,9 +107,10 @@ class Game:
                     card.x = 147.5
                     card.y = 35
             screen.blit(card.img,(card.x,card.y))
-        for card in self.cardslist:
-            if card.moving:
-                screen.blit(card.img,(card.x,card.y)) 
+        if movingcard:
+            screen.blit(movingcard.img,(movingcard.x,movingcard.y))
+            for card in movingcard.cardsontop:
+                screen.blit(card.img,(card.x,card.y))
         
     def deckshuffle(self):
         for card in self.discard:
