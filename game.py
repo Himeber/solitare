@@ -9,9 +9,10 @@ class Game:
         self.deck = []
         self.deckrect = self.cardback.get_rect(center = (37.5,35))
         self.discard = []
-        self.stacks = [Stack(37.5,287.5),Stack(172.5,287.5),Stack(302.5,287.5),Stack(435.5,287.5),Stack(571,287.5),Stack(702,287.5),Stack(830,287)]
+        self.stacks = [Stack(37.5,287.5),Stack(172.5,287.5),Stack(302.5,287.5),Stack(435.5,287.5),Stack(571,287.5),Stack(702,287.5),Stack(827.5,287.5)]
         self.debug = False
-        self.endstacks = [EndStack(430,30,'hearts'),EndStack(570,30,"diamonds"),EndStack(700,30,"clubs"),EndStack(830,30,"spades")]
+        self.endstacks = [EndStack(430,35,'hearts'),EndStack(561,35,"diamonds"),EndStack(695,35,"clubs"),EndStack(825,35,"spades")]
+        self.gamewin = False
         for i in range(8):
             i+=2
             cardname = "card_clubs_0"
@@ -111,6 +112,11 @@ class Game:
             screen.blit(movingcard.img,(movingcard.x,movingcard.y))
             for card in movingcard.cardsontop:
                 screen.blit(card.img,(card.x,card.y))
+        self.gamewin = True
+        for stack in self.endstacks:
+            if stack.nextValue != 14:
+                self.gamewin = False
+    
         
     def deckshuffle(self):
         for card in self.discard:
@@ -248,6 +254,9 @@ class Game:
         for stack in self.stacks:
             stack.cards.sort()
 
+    def won(self,screen):
+        print("game over, windede")
+
 
 class Stack:
     def __init__(self,x,y):
@@ -258,6 +267,7 @@ class Stack:
         self.rect = pygame.Rect(self.x, self.y, 100, 500)
         self.cards = []
         self.nextValue = 13
+        
         self.nextColor = "any"
     
     def update(self,screen):
@@ -287,13 +297,16 @@ class Stack:
             self.nextColor = "any"
         for card in self.cards:
             card.smallhitbox = True
+            self.cards[-1].smallhitbox = False
             if card.visible:
               if not card.moving:
                 screen.blit(card.img,(card.x,card.y))
                 card.moveable = True
+                #screen.blit(pygame.Surface((card.rect.width,card.rect.height)),(card.x,card.y))
             else:
                 screen.blit(card.back,(card.x+25,card.y))
                 card.moveable = False
+        
 
 class EndStack(Stack):
     def __init__(self, x, y,type):
@@ -313,7 +326,7 @@ class EndStack(Stack):
             self.nextValue = self.cards[-1].value+1
             self.cards[-1].visible = True
             if not self.cards[-1].moving:
-                screen.blit(self.cards[-1].img,(self.x-12.5,self.y))
+                screen.blit(self.cards[-1].img,(self.x-15,self.y))
             
             
 
@@ -346,7 +359,11 @@ class Card:
         if self.indeck:
             self.x = 999
             self.y = 999
-        self.rect = self.img.get_rect(center = (self.x+75,self.y+100))
+        if self.smallhitbox:
+            self.rect = pygame.Rect(self.x+25, self.y, 100, 50)
+        else:
+            self.rect = self.img.get_rect(center = (self.x+75,self.y+100))
+        
         if self.cardsontop != []:
             y = self.y
             for card in self.cardsontop:

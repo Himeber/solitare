@@ -60,5 +60,7 @@ while True:
     game.show_background(screen)
     game.showdeck(screen)
     game.updatecards(screen,cardbeinggrabbed)
+    if game.gamewin:
+        game.won(screen)
     pygame.display.update()
     clock.tick(120)
