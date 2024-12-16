@@ -11,8 +11,8 @@ carddragging = False
 cardbeinggrabbed = None
 deck = game.deckrect
 lastpos = 0,0
-game.dealer()
-game.debug = True
+game.start()
+game.debug = False
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -44,6 +44,8 @@ while True:
                     valid = game.checkvalid(cardbeinggrabbed)
                     if not valid:
                         card.x,card.y = lastpos
+                    else:
+                        game.moves += 1
                     card.moving = False
                     for card2 in card.cardsontop:
                         card2.moving = False
@@ -56,9 +58,14 @@ while True:
                 mouse_x, mouse_y = event.pos
                 card.x = mouse_x + offset_x
                 card.y = mouse_y + offset_y
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                game.start()
+        
     screen.fill((255,255,255))
     game.show_background(screen)
     game.showdeck(screen)
+    game.showmoves(screen)
     game.updatecards(screen,cardbeinggrabbed)
     if game.gamewin:
         game.won(screen)

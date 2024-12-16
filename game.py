@@ -9,10 +9,21 @@ class Game:
         self.deck = []
         self.deckrect = self.cardback.get_rect(center = (37.5,35))
         self.discard = []
-        self.stacks = [Stack(37.5,287.5),Stack(172.5,287.5),Stack(302.5,287.5),Stack(435.5,287.5),Stack(571,287.5),Stack(702,287.5),Stack(827.5,287.5)]
+        self.stacks = [Stack(37.5,287.5),Stack(172.5,287.5),Stack(302.5,287.5),Stack(435.5,287.5),Stack(571,287.5),Stack(702,287.5),Stack(830,287.5)]
         self.debug = False
-        self.endstacks = [EndStack(430,35,'hearts'),EndStack(561,35,"diamonds"),EndStack(695,35,"clubs"),EndStack(825,35,"spades")]
+        self.endstacks = [EndStack(430,35,'hearts'),EndStack(561,35,"diamonds"),EndStack(695,35,"clubs"),EndStack(830,35,"spades")]
         self.gamewin = False
+        self.highscore = None
+        self.moves = 0
+        self.font = pygame.font.SysFont(None,36)
+    def start(self):
+        self.moves = 0
+        self.gamewin = False
+        self.cardslist = []
+        self.deck = []
+        self.discard = []
+        self.stacks = [Stack(37.5,287.5),Stack(172.5,287.5),Stack(302.5,287.5),Stack(435.5,287.5),Stack(571,287.5),Stack(702,287.5),Stack(834,287.5)]
+        self.endstacks = [EndStack(430,35,'hearts'),EndStack(561,35,"diamonds"),EndStack(692.5,35,"clubs"),EndStack(827.5,35,"spades")]
         for i in range(8):
             i+=2
             cardname = "card_clubs_0"
@@ -57,6 +68,8 @@ class Game:
             self.deck.append(card)
             card.visible = False
         self.deckshuffle()
+        self.dealer()
+
     def resize_images(self):
         self.background = pygame.transform.scale(self.background,(1024,720))
         self.cardback = pygame.transform.scale(self.cardback,(100,200))
@@ -243,6 +256,28 @@ class Game:
             card.moving = False
         return valid
 
+    def showmoves(self,screen):
+        score_surface = self.font.render(str(self.moves)+ " moves", True, (0,0,0))
+        score_rect = score_surface.get_rect(center = (340,50))
+        screen.blit(score_surface,score_rect)
+        high = self.font.render("High score:", True, (0,0,0))
+        high_rect = high.get_rect(center = (355,100))
+        screen.blit(high,high_rect)
+        if self.highscore:
+            highscore = self.font.render(str(self.highscore) + " moves", True, (0,0,0))
+            highscore_rect = highscore.get_rect(center = (340,125))
+            screen.blit(highscore,highscore_rect)
+        else:
+            highscore = self.font.render("Not played", True, (0,0,0))
+            highscore_rect = score_surface.get_rect(center = (340,125))
+            screen.blit(highscore,highscore_rect)
+        restart = self.font.render("Press space", True, (0,0,0))
+        restart_rect = restart.get_rect(center = (355,170))
+        screen.blit(restart,restart_rect)
+        restart2 = self.font.render("to restart",True,(0,0,0))
+        restart2_rect = restart2.get_rect(center = (340,195))
+        screen.blit(restart2,restart2_rect)
+
     def dealer(self):
         for num,stack in enumerate(self.stacks):
             num += 1
@@ -255,7 +290,17 @@ class Game:
             stack.cards.sort()
 
     def won(self,screen):
-        print("game over, windede")
+        if not self.highscore:
+            self.highscore = 9999999
+        if self.moves < self.highscore:
+            self.highscore = self.moves
+        wintext = pygame.font.SysFont(None,128).render("You won!", True, (0,0,0))
+        wintext_rect = wintext.get_rect(center = (480,512))
+        screen.blit(wintext,wintext_rect)
+        playagaintext = pygame.font.SysFont(None,64).render("Press space to play again.", True, (0,0,0))
+        playagaintext_rect = playagaintext.get_rect(center = (480,700))
+        screen.blit(playagaintext,playagaintext_rect)
+
 
 
 class Stack:
